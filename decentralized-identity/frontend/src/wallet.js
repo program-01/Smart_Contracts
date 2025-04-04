@@ -1,7 +1,7 @@
 import { JsonRpcProvider, Contract } from "ethers";
 import contractABI from "./contract/IdentityVerifier.json";
 
-// Paste your local deployed contract address here:
+// Paste local deployed contract address here:
 const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"; // Replaced this with our deployed address
 
 // Point the provider to your local Hardhat node
@@ -9,7 +9,7 @@ const provider = new JsonRpcProvider("http://127.0.0.1:8545");
 
 export async function connectWallet() {
   // Use the first local Hardhat account as the signer
-  const signer = await provider.getSigner(0);
+  const signer = await provider.getSigner(1);
   return signer;
 }
 
@@ -22,3 +22,29 @@ export async function checkVerification() {
   console.log("Verified:", isVerified);
   return isVerified;
 }
+
+export async function getWalletInfo(signer) {
+    const address = await signer.getAddress();
+    const balanceBigInt = await signer.provider.getBalance(address);
+    const balance = (Number(balanceBigInt) / 1e18).toFixed(4);
+    return { address, balance };
+  }
+
+export async function issueIdentity(metadataURI) {
+  const signer = await connectWallet();
+  const contract = new Contract(contractAddress, contractABI.abi, signer);
+  const userAddress = await signer.getAddress();
+
+  console.log("Issuing identity to:", userAddress);
+  console.log("With metadata URI:", metadataURI);
+
+  const already = await contract.verifyIdentity(userAddress);
+  if (already) {
+    throw new Error("User is already verified.");
+  }
+
+  const tx = await contract.issueIdentity(userAddress, metadataURI);
+  await tx.wait();
+  return true;
+}
+
