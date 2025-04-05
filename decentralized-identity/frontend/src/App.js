@@ -1,45 +1,20 @@
-import React, { useState } from "react";
-import { checkVerification } from "./wallet";
-import "./App.css";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import MainDashboard from "./MainDashboard";
+import AdminPanel from "./AdminPanel";
 
 function App() {
-  const [verified, setVerified] = useState(null);
-  const [error, setError] = useState("");
-
-  const handleCheck = async () => {
-    try {
-      const result = await checkVerification();
-      setVerified(result);
-      setError("");
-    } catch (err) {
-      console.error("Verification failed:", err);
-      setVerified(null);
-      setError(err.message || "Something went wrong.");
-    }
-  };
-  
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>🛡️ Identity Verification Checker</h1>
-        <button onClick={handleCheck}>
-          Connect Wallet & Check Identity
-        </button>
-        {verified !== null && (
-          <p>
-            ✅ Identity Verified:{" "}
-            <strong>{verified ? "Yes ✅" : "No ❌"}</strong>
-          </p>
-        )}
-        {error && (
-        <p style={{ color: "red" }}>
-          ❌ Error: {error.includes("user rejected") ? "Wallet connection denied." : error}
-        </p>
-        )}
-
-      </header>
-    </div>
+    <Router>
+      <nav style={{ padding: "1rem", background: "#111" }}>
+        <Link to="/" style={{ marginRight: "1rem", color: "#0af" }}>Home</Link>
+        <Link to="/admin" style={{ color: "#0af" }}>Admin</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<MainDashboard />} />
+        <Route path="/admin" element={<AdminPanel />} />
+      </Routes>
+    </Router>
   );
 }
 
