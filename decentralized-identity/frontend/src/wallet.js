@@ -9,7 +9,7 @@ const provider = new JsonRpcProvider("http://127.0.0.1:8545");
 
 export async function connectWallet() {
   // Use the first local Hardhat account as the signer
-  const signer = await provider.getSigner(1);
+  const signer = await provider.getSigner(4);
   return signer;
 }
 
@@ -30,21 +30,26 @@ export async function getWalletInfo(signer) {
     return { address, balance };
   }
 
-export async function issueIdentity(metadataURI) {
-  const signer = await connectWallet();
-  const contract = new Contract(contractAddress, contractABI.abi, signer);
-  const userAddress = await signer.getAddress();
-
-  console.log("Issuing identity to:", userAddress);
-  console.log("With metadata URI:", metadataURI);
-
-  const already = await contract.verifyIdentity(userAddress);
-  if (already) {
-    throw new Error("User is already verified.");
+  export async function issueIdentity(userAddress, metadataURI) {
+    const adminSigner = await provider.getSigner(0); // must be owner
+    const contract = new Contract(contractAddress, contractABI.abi, adminSigner);
+  
+    console.log("Admin issuing identity to:", userAddress);
+    console.log("With metadata URI:", metadataURI);
+  
+    const already = await contract.verifyIdentity(userAddress);
+    if (already) {
+      throw new Error("User is already verified.");
+    }
+  
+    const tx = await contract.issueIdentity(userAddress, metadataURI);
+    await tx.wait();
+    return true;
   }
 
-  const tx = await contract.issueIdentity(userAddress, metadataURI);
-  await tx.wait();
-  return true;
-}
+  export async function isUserVerified(address) {
+    const signer = await connectWallet(); // or provider.getSigner(0)
+    const contract = new Contract(contractAddress, contractABI.abi, signer);
+    return await contract.verifyIdentity(address);
+  }
 
