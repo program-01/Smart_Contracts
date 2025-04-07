@@ -17,44 +17,48 @@ export default function MainDashboard() {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
 
+  const [showRequestForm, setShowRequestForm] = useState(false); // Request form visibility
+
   const handleLogin = async () => {
     try {
       setLoading(true);
-
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // Small delay
-
+  
+      // Add a small delay to ensure the "Logging in..." message stays visible
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
+  
       // Fetch the list of requests from db.json
       const res = await fetch("http://localhost:3001/requests");
       const data = await res.json();
-
+  
       // Find the user by name and DOB
       const user = data.find(
         (req) => req.name.toLowerCase() === name.toLowerCase() && req.dob === dob
       );
-
+  
       if (user) {
         // User found, check verification status
         setAddress(user.address);
         setUserData(user);
-        
+  
         const signer = await connectWallet();
         const info = await getWalletInfo(signer);
         setBalance(info.balance);
-        
-        const verificationResult = await checkVerification(info.address);
-
-        if (verificationResult) {
-          setVerified(true); // User is verified
-        } else {
-          setVerified(false); // User is not verified
-        }
+  
+        // Set the verified status
+        setVerified(user.verified);
+  
+        alert("Logged in successfully!");
       } else {
         // If user not found, prompt them to request verification
+        console.log("Error: No user found with that name and date of birth.");
         setVerified(false);
         setUserData(null); // Clear any previous user data
-        setError("No user found with that name and date of birth. Please request verification.");
+        alert("❌ No user found with that name and date of birth. Please request verification.");
+  
+        // Show the Request Form when user is not found
+        setShowRequestForm(true);
       }
-
+  
       setError(""); // Clear any previous error messages
     } catch (err) {
       console.error("Error:", err);
@@ -63,6 +67,7 @@ export default function MainDashboard() {
       setLoading(false);
     }
   };
+  
 
   // Log out function
   const handleLogout = () => {
@@ -73,6 +78,7 @@ export default function MainDashboard() {
     setVerified(null);
     setUserData(null);
     setError("");
+    setDob("");
   };
 
   return (
@@ -105,7 +111,7 @@ export default function MainDashboard() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              style={{ padding: "10px", marginRight: "10px" }}
+              style={{ width: "175px", padding: "10px", marginRight: "10px" }}
             />
             <input
               type="text"
@@ -113,7 +119,7 @@ export default function MainDashboard() {
               value={dob}
               onChange={(e) => setDob(e.target.value)}
               required
-              style={{ padding: "10px", marginRight: "10px" }}
+              style={{ width: "225px", padding: "10px", marginRight: "10px" }}
             />
             <button
               type="submit"
@@ -127,6 +133,12 @@ export default function MainDashboard() {
               {loading ? "⏳ Logging in..." : "Login"}
             </button>
           </form>
+          {showRequestForm && (
+            <div style={{ marginTop: "2rem" }}>
+              <h2>📝 Request Verification</h2>
+              <RequestForm />
+            </div>
+          )}
         </div>
       ) : (
         <>
