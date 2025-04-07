@@ -12,22 +12,40 @@ export default function AdminPanel() {
   const fetchRequests = async () => {
     const res = await fetch("http://localhost:3001/requests");
     const data = await res.json();
-    setRequests(data);
-
-    // For each request with an address, check if they are verified
-    const statusMap = {};
-    for (const req of data) {
-      if (req.address) {
-        try {
-          const isVerified = await isUserVerified(req.address);
-          statusMap[req.address] = isVerified;
-        } catch (err) {
-          console.error("Error checking verification for", req.address, err);
+  
+    // Sync blockchain verification with db.json
+    const updatedData = await Promise.all(
+      data.map(async (req) => {
+        if (req.address) {
+          try {
+            const isVerified = await isUserVerified(req.address);
+  
+            // If the blockchain says they're verified but db.json doesn't
+            if (isVerified && !req.verified) {
+              const updatedReq = { ...req, verified: true };
+              await fetch(`http://localhost:3001/requests/${req.id}`, {
+                method: "PUT",
+                body: JSON.stringify(updatedReq),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+              return updatedReq;
+            }
+  
+            return req;
+          } catch (err) {
+            console.error("Error checking verification for", req.address, err);
+            return req;
+          }
         }
-      }
-    }
-    setVerifiedMap(statusMap);
+        return req;
+      })
+    );
+  
+    setRequests(updatedData);
   };
+  
 
   const handleApprove = async (req) => {
     try {
@@ -77,13 +95,9 @@ export default function AdminPanel() {
     fetchRequests();
   }, []);
 
-  const unapproved = requests.filter(
-    (req) => req.address && !verifiedMap[req.address]
-  );
+  const unapproved = requests.filter(req => req.address && !req.verified);
+  const approved = requests.filter(req => req.address && req.verified);
 
-  const approved = requests.filter(
-    (req) => req.address && verifiedMap[req.address]
-  );
 
   return (
     <div style={{ padding: "2rem" }}>
