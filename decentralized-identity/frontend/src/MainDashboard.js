@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   checkVerification,
   connectWallet,
@@ -18,6 +18,16 @@ export default function MainDashboard() {
   const [dob, setDob] = useState("");
 
   const [showRequestForm, setShowRequestForm] = useState(false); // Request form visibility
+
+  useEffect(() => {
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+    if (savedUser) {
+      setAddress(savedUser.address);
+      setVerified(savedUser.verified);
+      setUserData(savedUser.userData);
+      setBalance(savedUser.balance);
+    }
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -39,13 +49,18 @@ export default function MainDashboard() {
         // User found, check verification status
         setAddress(user.address);
         setUserData(user);
+        setVerified(user.verified);
   
         const signer = await connectWallet();
         const info = await getWalletInfo(signer);
         setBalance(info.balance);
-  
-        // Set the verified status
-        setVerified(user.verified);
+
+        localStorage.setItem("user", JSON.stringify({
+          address: user.address,
+          verified: user.verified,
+          userData: user,
+          balance: info.balance,
+        }));
   
         alert("Logged in successfully!");
       } else {
@@ -79,6 +94,7 @@ export default function MainDashboard() {
     setUserData(null);
     setError("");
     setDob("");
+    localStorage.removeItem("user");
   };
 
   return (
