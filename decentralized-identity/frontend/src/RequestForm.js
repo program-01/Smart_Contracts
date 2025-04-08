@@ -83,12 +83,18 @@ export default function RequestForm() {
   };
   
 
-  const renderOptions = (start, end) =>
-    Array.from({ length: end - start + 1 }, (_, i) => (
-      <option key={start + i} value={start + i}>
-        {start + i}
+  const renderOptions = (start, end, descending = false) => {
+    const range = Array.from(
+      { length: Math.abs(end - start) + 1 },
+      (_, i) => descending ? end - i : start + i
+    );
+  
+    return range.map((value) => (
+      <option key={value} value={value}>
+        {value}
       </option>
     ));
+  };
 
     const isFormValid = () => {
       return (
@@ -140,7 +146,7 @@ export default function RequestForm() {
       </select>
       <select name="dobYear" value={form.dobYear} onChange={handleChange} required>
         <option value="">Year</option>
-        {renderOptions(1950, 2007)}
+        {renderOptions(1950, 2007, true)}
       </select>
       <br /><br />
 

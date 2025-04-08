@@ -58,7 +58,18 @@ export default function MainDashboard() {
       if (user) {
         // User found, check verification status
         setAddress(user.address);
-        setUserData(user);
+        
+        const formatName = (name) => {
+          return name
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(" ");
+        };
+        
+        const formattedUser = { ...user, name: formatName(user.name) };
+        setUserData(formattedUser);
+        
+        
         setVerified(user.verified);
   
         const signer = await connectWallet();
@@ -68,7 +79,7 @@ export default function MainDashboard() {
         localStorage.setItem("user", JSON.stringify({
           address: user.address,
           verified: user.verified,
-          userData: user,
+          userData: formattedUser,
           balance: info.balance,
         }));
   
@@ -103,6 +114,17 @@ export default function MainDashboard() {
     setError("");
     localStorage.removeItem("user");
   };
+
+  const formatPhoneNumber = (phone) => {
+    // Remove all non-digit characters
+    const cleaned = ('' + phone).replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    return phone; // Return as-is if it doesn't match the pattern
+  };
+  
 
   return (
     <div
@@ -176,9 +198,13 @@ export default function MainDashboard() {
               style={{ padding: "10px", marginRight: "10px" }}
             >
               <option value="">Year</option>
-              {[...Array(2007 - 1950 + 1)].map((_, i) => {
-                const year = 1950 + i;
-                return <option key={year} value={year}>{year}</option>;
+              {Array.from({ length: 2007 - 1950 + 1 }, (_, i) => {
+                const year = 2007 - i;
+                return (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                );
               })}
             </select>
 
@@ -232,7 +258,7 @@ export default function MainDashboard() {
               <p><strong>Name:</strong> {userData.name}</p>
               <p><strong>Email:</strong> {userData.email}</p>
               <p><strong>DOB:</strong> {userData.dob}</p>
-              <p><strong>Phone:</strong> {userData.phone}</p>
+              <p><strong>Phone:</strong> {formatPhoneNumber(userData.phone)}</p>
             </div>
           )}
 

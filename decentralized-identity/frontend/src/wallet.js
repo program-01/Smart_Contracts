@@ -6,10 +6,35 @@ const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Replace
 
 // Point the provider to your local Hardhat node
 const provider = new JsonRpcProvider("http://127.0.0.1:8545");
-// When clicking on home, you can check your personal dashboard, you request a thing SIGN, IN 
+
+let signerIndex = 5; // Keeps track of the last used signer
+
+export function resetSignerIndex() { // Resets from the beginning
+  signerIndex = 0;
+}
+
+export function setSignerIndex(index) {
+  signerIndex = index;
+}
+
+export async function getNextSigner() {
+  const accounts = await provider.listAccounts();
+  if (signerIndex >= accounts.length) {
+    throw new Error("No more available signers.");
+  }
+  const signer = await provider.getSigner(signerIndex);
+  signerIndex++; // Move to next one for future calls
+  return signer;
+}
+
+// export async function connectWallet() {
+//   // Use the first local Hardhat account as the signer
+//   const signer = await provider.getSigner();
+//   return signer;
+// }
+
 export async function connectWallet() {
-  // Use the first local Hardhat account as the signer
-  const signer = await provider.getSigner();
+  const signer = await getNextSigner();
   return signer;
 }
 
