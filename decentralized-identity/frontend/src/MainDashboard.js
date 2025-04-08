@@ -14,8 +14,12 @@ export default function MainDashboard() {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null); // For storing user data from db.json
 
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dobMonth, setDobMonth] = useState("");
+  const [dobDay, setDobDay] = useState("");
+  const [dobYear, setDobYear] = useState("");
+
 
   const [showRequestForm, setShowRequestForm] = useState(false); // Request form visibility
 
@@ -41,9 +45,15 @@ export default function MainDashboard() {
       const data = await res.json();
   
       // Find the user by name and DOB
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.toLowerCase();
+      const formattedDob = `${dobMonth.padStart(2, "0")}/${dobDay.padStart(2, "0")}/${dobYear}`;
+
       const user = data.find(
-        (req) => req.name.toLowerCase() === name.toLowerCase() && req.dob === dob
+        (req) =>
+          req.name.toLowerCase() === fullName &&
+          req.dob === formattedDob
       );
+
   
       if (user) {
         // User found, check verification status
@@ -86,14 +96,11 @@ export default function MainDashboard() {
 
   // Log out function
   const handleLogout = () => {
-    setName("");
-    setDob("");
     setAddress("");
     setBalance("");
     setVerified(null);
     setUserData(null);
     setError("");
-    setDob("");
     localStorage.removeItem("user");
   };
 
@@ -123,20 +130,58 @@ export default function MainDashboard() {
           >
             <input
               type="text"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              placeholder="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               required
-              style={{ width: "175px", padding: "10px", marginRight: "10px" }}
+              style={{ width: "140px", padding: "10px", marginRight: "10px" }}
             />
             <input
               type="text"
-              placeholder="Date of Birth (MM//DD/YYYY)"
-              value={dob}
-              onChange={(e) => setDob(e.target.value)}
+              placeholder="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
               required
-              style={{ width: "225px", padding: "10px", marginRight: "10px" }}
+              style={{ width: "140px", padding: "10px", marginRight: "10px" }}
             />
+
+            <select
+              value={dobMonth}
+              onChange={(e) => setDobMonth(e.target.value)}
+              required
+              style={{ padding: "10px", marginRight: "5px" }}
+            >
+              <option value="">Month</option>
+              {[...Array(12)].map((_, i) => (
+                <option key={i} value={i + 1}>{i + 1}</option>
+              ))}
+            </select>
+
+            <select
+              value={dobDay}
+              onChange={(e) => setDobDay(e.target.value)}
+              required
+              style={{ padding: "10px", marginRight: "5px" }}
+            >
+              <option value="">Day</option>
+              {[...Array(31)].map((_, i) => (
+                <option key={i} value={i + 1}>{i + 1}</option>
+              ))}
+            </select>
+
+            <select
+              value={dobYear}
+              onChange={(e) => setDobYear(e.target.value)}
+              required
+              style={{ padding: "10px", marginRight: "10px" }}
+            >
+              <option value="">Year</option>
+              {[...Array(2007 - 1950 + 1)].map((_, i) => {
+                const year = 1950 + i;
+                return <option key={year} value={year}>{year}</option>;
+              })}
+            </select>
+
             <button
               type="submit"
               style={{
