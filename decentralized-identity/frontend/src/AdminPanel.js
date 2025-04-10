@@ -12,61 +12,92 @@ export default function AdminPanel() {
   const fetchRequests = async () => {
     const res = await fetch("http://localhost:3001/requests");
     const data = await res.json();
-    setRequests(data);
-
-    // For each request with an address, check if they are verified
-    const statusMap = {};
-    for (const req of data) {
-      if (req.address) {
-        try {
-          const isVerified = await isUserVerified(req.address);
-          statusMap[req.address] = isVerified;
-        } catch (err) {
-          console.error("Error checking verification for", req.address, err);
+  
+    // Sync blockchain verification with db.json
+    const updatedData = await Promise.all(
+      data.map(async (req) => {
+        if (req.address) {
+          try {
+            const isVerified = await isUserVerified(req.address);
+  
+            // If the blockchain says they're verified but db.json doesn't
+            if (isVerified && !req.verified) {
+              const updatedReq = { ...req, verified: true };
+              await fetch(`http://localhost:3001/requests/${req.id}`, {
+                method: "PUT",
+                body: JSON.stringify(updatedReq),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+              return updatedReq;
+            }
+  
+            return req;
+          } catch (err) {
+            console.error("Error checking verification for", req.address, err);
+            return req;
+          }
         }
-      }
-    }
-    setVerifiedMap(statusMap);
+        return req;
+      })
+    );
+  
+    setRequests(updatedData);
   };
+  
 
   const handleApprove = async (req) => {
     try {
-      setLoading(true);
-      const metadata = {
-        name: req.name,
-        email: req.email,
-        dob: req.dob,
-        phone: req.phone,
-      };
+        setLoading(true);
+        const metadata = {
+            name: req.name,
+            email: req.email,
+            dob: req.dob,
+            phone: req.phone,
+        };
 
-      console.log("📝 Uploading metadata:", metadata);
-      const metadataURI = await uploadMetadataToIPFS(metadata);
-      console.log("✅ Uploaded to IPFS:", metadataURI);
+        console.log("📝 Uploading metadata:", metadata);
+        const metadataURI = await uploadMetadataToIPFS(metadata);
+        console.log("✅ Uploaded to IPFS:", metadataURI);
 
-      await issueIdentity(req.address, metadataURI);
-      alert("✅ Identity minted successfully!");
+        // Here we approve the user and set their 'verified' status to true
+        await issueIdentity(req.address, metadataURI);
 
-      // Refresh verification status
-      await fetchRequests();
+        const updatedUser = { // Set to true or false depending on whether they've been approved
+          ...req,
+          verified: true, // Set the verified status to true for approved users
+        };
+
+        // Update the db.json to reflect that the user is verified
+        await fetch(`http://localhost:3001/requests/${req.id}`, {
+          method: "PUT",
+          body: JSON.stringify(updatedUser),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        alert("✅ Identity minted successfully!");
+
+        // Refresh verification status
+        await fetchRequests();
     } catch (err) {
-      console.error("❌ Approval failed:", err);
-      alert("❌ Failed to approve user: " + err.message);
+        console.error("❌ Approval failed:", err);
+        alert("❌ Failed to approve user: " + err.message);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
+
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
-  const unapproved = requests.filter(
-    (req) => req.address && !verifiedMap[req.address]
-  );
+  const unapproved = requests.filter(req => req.address && !req.verified);
+  const approved = requests.filter(req => req.address && req.verified);
 
-  const approved = requests.filter(
-    (req) => req.address && verifiedMap[req.address]
-  );
 
   return (
     <div style={{ padding: "2rem" }}>
