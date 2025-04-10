@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet } from "./wallet";
+import { FaExclamationCircle } from "react-icons/fa";
 
 export default function RequestForm() {
   const [form, setForm] = useState({
@@ -10,7 +11,8 @@ export default function RequestForm() {
     dobDay: "",
     dobYear: "",
     phone: "",
-    address: ""
+    address: "",
+    password: ""
   });
   const [submitted, setSubmitted] = useState(false);
 
@@ -44,6 +46,7 @@ export default function RequestForm() {
         dobYear: "",
         phone: "",
         address: prev.address,
+        password: ""
       }));
     }
   }, [submitted]);
@@ -64,6 +67,8 @@ export default function RequestForm() {
       dob,
       phone: form.phone,
       address: form.address,
+      password: form.password,
+      verified: false
     };
   
     try {
@@ -96,24 +101,28 @@ export default function RequestForm() {
     ));
   };
 
-    const isFormValid = () => {
-      return (
-        form.firstname &&
-        form.lastname &&
-        form.email &&
-        form.dobMonth &&
-        form.dobDay &&
-        form.dobYear &&
-        form.phone &&
-        form.address
-      );
-    };
+  const isFormValid = () => {
+    // Check if the password matches the regex and the form is otherwise valid
+    const passwordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*.]{10,}$/.test(form.password);
+    return (
+      form.firstname &&
+      form.lastname &&
+      form.email &&
+      form.dobMonth &&
+      form.dobDay &&
+      form.dobYear &&
+      form.phone &&
+      form.address &&
+      passwordValid
+    );
+  };
     
 
   if (submitted) return <p>✅ Verification request submitted!</p>;
   
   return (
     <form onSubmit={handleSubmit}>
+      <label>Personal Information:</label><br />
       <input
         name="firstname"
         onChange={handleChange}
@@ -133,6 +142,13 @@ export default function RequestForm() {
         placeholder="Email"
         required
       /><br />
+      <input
+        name="phone"
+        type="tel"
+        onChange={handleChange}
+        placeholder="Phone"
+        required
+      /><br />
 
       <br />
       <label>Date of Birth:</label><br />
@@ -150,13 +166,36 @@ export default function RequestForm() {
       </select>
       <br /><br />
 
-      <input
-        name="phone"
-        type="tel"
-        onChange={handleChange}
-        placeholder="Phone"
-        required
-      /><br />
+      <label>Password:</label><br />
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <input
+          name="password"
+          type="password"
+          onChange={handleChange}
+          placeholder="Password"
+          required
+          minLength="10"
+          pattern=".*[a-z].*"
+          title="Password must include at least 1 lowercase, 1 uppercase, 1 number, 1 special symbol, and be at least 10 characters long."
+          style={{ paddingRight: '30px' }} // To leave space for the icon
+        />
+        <FaExclamationCircle
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '190px',
+            transform: 'translateY(-50%)',
+            cursor: 'pointer',
+            fontSize: '18px',
+            color: '#FFCC00', // Icon color
+            opacity: 0.7,
+          }}
+          className="tooltip-icon"
+        />
+        <div className="tooltip">
+          Password must include at least 1 lowercase, 1 uppercase, 1 number, 1 special symbol, and be at least 10 characters long.
+        </div>
+      </div><br />
 
       <p><strong>Wallet:</strong> {form.address || "Connecting..."}</p>
       <button type="submit" disabled={!isFormValid()}>

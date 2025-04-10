@@ -14,12 +14,12 @@ export default function MainDashboard() {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null); // For storing user data from db.json
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  // const [firstName, setFirstName] = useState("");
+  // const [lastName, setLastName] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [dobDay, setDobDay] = useState("");
   const [dobYear, setDobYear] = useState("");
-
+  const [password, setPassword] = useState("");
 
   const [showRequestForm, setShowRequestForm] = useState(false); // Request form visibility
 
@@ -45,15 +45,13 @@ export default function MainDashboard() {
       const data = await res.json();
   
       // Find the user by name and DOB
-      const fullName = `${firstName.trim()} ${lastName.trim()}`.toLowerCase();
       const formattedDob = `${dobMonth.padStart(2, "0")}/${dobDay.padStart(2, "0")}/${dobYear}`;
 
       const user = data.find(
         (req) =>
-          req.name.toLowerCase() === fullName &&
-          req.dob === formattedDob
+          req.dob === formattedDob &&
+          req.password === password
       );
-
   
       if (user) {
         // User found, check verification status
@@ -89,7 +87,7 @@ export default function MainDashboard() {
         console.log("Error: No user found with that name and date of birth.");
         setVerified(false);
         setUserData(null); // Clear any previous user data
-        alert("❌ No user found with that name and date of birth. Please request verification.");
+        alert("❌ No user found with that password and date of birth. Please request verification.");
   
         // Show the Request Form when user is not found
         setShowRequestForm(true);
@@ -151,20 +149,12 @@ export default function MainDashboard() {
             style={{ marginBottom: "1rem" }}
           >
             <input
-              type="text"
-              placeholder="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              style={{ width: "140px", padding: "10px", marginRight: "10px" }}
-            />
-            <input
-              type="text"
-              placeholder="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-              style={{ width: "140px", padding: "10px", marginRight: "10px" }}
+              style={{ width: "200px", padding: "10px", marginRight: "10px" }}
             />
 
             <select
@@ -243,13 +233,6 @@ export default function MainDashboard() {
                 {verified ? "Yes ✅" : "No ❌"}
               </strong>
             </p>
-          )}
-
-          {verified === false && (
-            <>
-              <h2 style={{ marginTop: "2rem" }}>📝 Request Verification</h2>
-              <RequestForm />
-            </>
           )}
 
           {userData && (
