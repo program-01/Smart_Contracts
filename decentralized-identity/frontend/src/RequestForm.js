@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { connectWallet } from "./wallet";
 import { FaExclamationCircle } from "react-icons/fa";
+import { uploadMetadataToIPFS } from "./ipfs";
+import { submitMetadataHash } from "./wallet";
+import { keccak256, toUtf8Bytes } from "ethers";
 
 export default function RequestForm() {
   const [form, setForm] = useState({
@@ -58,20 +61,41 @@ export default function RequestForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     const fullName = `${form.firstname.trim()} ${form.lastname.trim()}`;
     const dob = `${form.dobMonth.padStart(2, "0")}/${form.dobDay.padStart(2, "0")}/${form.dobYear}`;
   
-    const finalForm = {
+    const metadata = {
       name: fullName,
       email: form.email,
       dob,
       phone: form.phone,
-      address: form.address,
-      password: form.password,
-      verified: false
     };
   
     try {
+      // 1. Upload to IPFS
+      const metadataURI = await uploadMetadataToIPFS(metadata);
+  
+      // 2. Hash the metadata
+      const metadataString = JSON.stringify(metadata);
+      const hash = keccak256(toUtf8Bytes(metadataString));
+  
+      // 3. Submit hash on-chain
+      await submitMetadataHash(metadata);
+  
+      // 4. Save to backend
+      const finalForm = {
+        name: fullName,
+        email: form.email,
+        dob,
+        phone: form.phone,
+        address: form.address,
+        password: form.password,
+        verified: false,
+        metadataHash: hash,
+        metadataURI: metadataURI
+      };
+  
       const res = await fetch("http://localhost:3001/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -79,11 +103,10 @@ export default function RequestForm() {
       });
   
       if (!res.ok) throw new Error("Submission failed");
-  
       setSubmitted(true);
     } catch (err) {
       console.error("Error submitting form:", err);
-      alert("Failed to submit form. Please try again.");
+      alert("❌ Submission failed. Please try again.");
     }
   };
   
