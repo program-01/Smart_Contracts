@@ -3,8 +3,24 @@ import {
   checkVerification,
   connectWallet,
   getWalletInfo,
+  getMetadataHash,
 } from "./wallet";
 import RequestForm from "./RequestForm";
+import { keccak256, toUtf8Bytes } from "ethers"; // For hashing IPFS data
+
+// ✅ Helper to verify IPFS content matches on-chain hash
+const verifyMetadataIntegrity = async (uri, expectedHash) => {
+  try {
+    const res = await fetch(uri); // Fetch IPFS JSON
+    const metadata = await res.json();
+    const metadataString = JSON.stringify(metadata);
+    const calculatedHash = keccak256(toUtf8Bytes(metadataString));
+    return calculatedHash === expectedHash;
+  } catch (err) {
+    console.error("Error verifying IPFS content:", err);
+    return false;
+  }
+};
 
 export default function MainDashboard() {
   const [verified, setVerified] = useState(null);
@@ -12,16 +28,13 @@ export default function MainDashboard() {
   const [balance, setBalance] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userData, setUserData] = useState(null); // For storing user data from db.json
+  const [userData, setUserData] = useState(null);
 
-  // const [firstName, setFirstName] = useState("");
-  // const [lastName, setLastName] = useState("");
   const [dobMonth, setDobMonth] = useState("");
   const [dobDay, setDobDay] = useState("");
   const [dobYear, setDobYear] = useState("");
   const [password, setPassword] = useState("");
-
-  const [showRequestForm, setShowRequestForm] = useState(false); // Request form visibility
+  const [showRequestForm, setShowRequestForm] = useState(false);
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("user"));
@@ -36,64 +49,69 @@ export default function MainDashboard() {
   const handleLogin = async () => {
     try {
       setLoading(true);
-  
-      // Add a small delay to ensure the "Logging in..." message stays visible
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1 second delay
-  
-      // Fetch the list of requests from db.json
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const res = await fetch("http://localhost:3001/requests");
       const data = await res.json();
-  
-      // Find the user by name and DOB
-      const formattedDob = `${dobMonth.padStart(2, "0")}/${dobDay.padStart(2, "0")}/${dobYear}`;
 
+      const formattedDob = `${dobMonth.padStart(2, "0")}/${dobDay.padStart(2, "0")}/${dobYear}`;
       const user = data.find(
-        (req) =>
-          req.dob === formattedDob &&
-          req.password === password
+        (req) => req.dob === formattedDob && req.password === password
       );
-  
+
       if (user) {
-        // User found, check verification status
         setAddress(user.address);
-        
+
         const formatName = (name) => {
           return name
             .split(" ")
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
             .join(" ");
         };
-        
+
         const formattedUser = { ...user, name: formatName(user.name) };
+
+        // ✅ Fetch metadata hash from blockchain
+        const metadataHash = await getMetadataHash(user.address);
+        formattedUser.metadataHash = metadataHash;
+
+        // ✅ Check IPFS URI and verify integrity
+        if (user.metadataURI) {
+          const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
+          formattedUser.metadataURI = user.metadataURI;
+          formattedUser.metadataIntegrity = isValid;
+        }
+
         setUserData(formattedUser);
-        
-        
         setVerified(user.verified);
-  
+
         const signer = await connectWallet();
         const info = await getWalletInfo(signer);
         setBalance(info.balance);
 
-        localStorage.setItem("user", JSON.stringify({
-          address: user.address,
-          verified: user.verified,
-          userData: formattedUser,
-          balance: info.balance,
-        }));
-  
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            address: user.address,
+            verified: user.verified,
+            userData: formattedUser,
+            balance: info.balance,
+          })
+        );
+
         alert("Logged in successfully!");
       } else {
-        // If user not found, prompt them to request verification
-        console.log("Error: No user found with that name and date of birth.");
+        console.log("Error: No user found with that password and date of birth.");
         setVerified(false);
-        setUserData(null); // Clear any previous user data
+        setUserData(null);
         alert("❌ No user found with that password and date of birth. Please request verification.");
-  
-        // Show the Request Form when user is not found
         setShowRequestForm(true);
       }
-  
-      setError(""); // Clear any previous error messages
+
+      setError("");
     } catch (err) {
       console.error("Error:", err);
       setError("Failed to log in.");
@@ -101,9 +119,7 @@ export default function MainDashboard() {
       setLoading(false);
     }
   };
-  
 
-  // Log out function
   const handleLogout = () => {
     setAddress("");
     setBalance("");
@@ -114,15 +130,11 @@ export default function MainDashboard() {
   };
 
   const formatPhoneNumber = (phone) => {
-    // Remove all non-digit characters
     const cleaned = ('' + phone).replace(/\D/g, '');
     const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-    if (match) {
-      return `${match[1]}-${match[2]}-${match[3]}`;
-    }
-    return phone; // Return as-is if it doesn't match the pattern
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    return phone;
   };
-  
 
   return (
     <div
@@ -156,7 +168,6 @@ export default function MainDashboard() {
               required
               style={{ width: "200px", padding: "10px", marginRight: "10px" }}
             />
-
             <select
               value={dobMonth}
               onChange={(e) => setDobMonth(e.target.value)}
@@ -168,7 +179,6 @@ export default function MainDashboard() {
                 <option key={i} value={i + 1}>{i + 1}</option>
               ))}
             </select>
-
             <select
               value={dobDay}
               onChange={(e) => setDobDay(e.target.value)}
@@ -180,7 +190,6 @@ export default function MainDashboard() {
                 <option key={i} value={i + 1}>{i + 1}</option>
               ))}
             </select>
-
             <select
               value={dobYear}
               onChange={(e) => setDobYear(e.target.value)}
@@ -197,7 +206,6 @@ export default function MainDashboard() {
                 );
               })}
             </select>
-
             <button
               type="submit"
               style={{
@@ -210,6 +218,7 @@ export default function MainDashboard() {
               {loading ? "⏳ Logging in..." : "Login"}
             </button>
           </form>
+
           {showRequestForm && (
             <div style={{ marginTop: "2rem" }}>
               <h2>📝 Request Verification</h2>
@@ -219,13 +228,8 @@ export default function MainDashboard() {
         </div>
       ) : (
         <>
-          <p>
-            <strong>Wallet:</strong> {address}
-          </p>
-          <p>
-            <strong>Balance:</strong> {balance} ETH
-          </p>
-
+          <p><strong>Wallet:</strong> {address}</p>
+          <p><strong>Balance:</strong> {balance} ETH</p>
           {verified !== null && (
             <p>
               ✅ Identity Verified:{" "}
@@ -236,16 +240,44 @@ export default function MainDashboard() {
           )}
 
           {userData && (
-            <div style={{ marginTop: "2rem", backgroundColor: "#2c2c3d", padding: "1rem", borderRadius: "10px" }}>
+            <div style={{
+              marginTop: "2rem",
+              backgroundColor: "#2c2c3d",
+              padding: "1rem",
+              borderRadius: "10px"
+            }}>
               <h2>User Information</h2>
               <p><strong>Name:</strong> {userData.name}</p>
               <p><strong>Email:</strong> {userData.email}</p>
               <p><strong>DOB:</strong> {userData.dob}</p>
               <p><strong>Phone:</strong> {formatPhoneNumber(userData.phone)}</p>
+              <p><strong>Metadata Hash:</strong> {userData.metadataHash}</p>
+
+              {userData.metadataURI && (
+                <p>
+                  <strong>IPFS Metadata:</strong>{" "}
+                  <a
+                    href={userData.metadataURI}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#0af" }}
+                  >
+                    View Metadata
+                  </a>
+                </p>
+              )}
+
+              {userData.metadataIntegrity !== undefined && (
+                <p>
+                  <strong>Metadata Integrity:</strong>{" "}
+                  <span style={{ color: userData.metadataIntegrity ? "#0f0" : "#f00" }}>
+                    {userData.metadataIntegrity ? "Valid ✅" : "Mismatch ❌"}
+                  </span>
+                </p>
+              )}
             </div>
           )}
 
-          {/* Log out button */}
           <button
             onClick={handleLogout}
             style={{
@@ -265,14 +297,12 @@ export default function MainDashboard() {
         <p style={{ color: "red", marginTop: "1rem" }}>❌ {error}</p>
       )}
 
-      <div
-        style={{
-          marginTop: "2rem",
-          backgroundColor: "#2c2c3d",
-          padding: "1rem",
-          borderRadius: "10px",
-        }}
-      >
+      <div style={{
+        marginTop: "2rem",
+        backgroundColor: "#2c2c3d",
+        padding: "1rem",
+        borderRadius: "10px",
+      }}>
         <h2 style={{ marginBottom: "0.5rem" }}>🧪 Model App (Coming Soon)</h2>
         <p>This section will be available once you’re verified.</p>
       </div>
