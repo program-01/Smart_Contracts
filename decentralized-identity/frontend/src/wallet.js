@@ -3,7 +3,7 @@ import { keccak256, toUtf8Bytes } from "ethers";
 import contractABI from "./contract/IdentityVerifier.json";
 
 // Paste local deployed contract address here:
-const contractAddress = "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1"; // Replaced this with our deployed address
+const contractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"; // Replaced this with our deployed address
 
 // Point the provider to your local Hardhat node
 const provider = new JsonRpcProvider("http://127.0.0.1:8545");
@@ -110,6 +110,8 @@ export async function submitMetadataHash(metadata) {
     const hash = keccak256(toUtf8Bytes(metadataString)); // Hash it client-side
   
     const tx = await contract.submitMetadataHash(hash);
+    console.log("Submitted hash:", hash);
+    
     await tx.wait();
     return hash;
   }
@@ -117,6 +119,9 @@ export async function submitMetadataHash(metadata) {
   export async function getMetadataHash(address) {
     const signer = await connectWallet();
     const contract = new Contract(contractAddress, contractABI.abi, signer);
+    console.log("Contract address:", contractAddress);
+    console.log("Contract ABI:", contractABI.abi); // just the top-level to confirm structure
+
     return await contract.getMetadataHash(address);
   }
 
