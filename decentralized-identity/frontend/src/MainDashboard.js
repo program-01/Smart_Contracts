@@ -3,7 +3,7 @@ import {
   checkVerification,
   connectWallet,
   getWalletInfo,
-  getMetadataHash,
+  getMetadataHash
 } from "./wallet";
 import RequestForm from "./RequestForm";
 import { keccak256, toUtf8Bytes } from "ethers"; // For hashing IPFS data
@@ -13,8 +13,13 @@ const verifyMetadataIntegrity = async (uri, expectedHash) => {
   try {
     const res = await fetch(uri); // Fetch IPFS JSON
     const metadata = await res.json();
+    console.log("Fetched IPFS URI:", res);
+    console.log("Expected Hash:", metadata);
+
     const metadataString = JSON.stringify(metadata);
+    console.log("Metadata stringified:", metadataString);
     const calculatedHash = keccak256(toUtf8Bytes(metadataString));
+    console.log("Calculated hash from IPFS data:", calculatedHash);
     return calculatedHash === expectedHash;
   } catch (err) {
     console.error("Error verifying IPFS content:", err);
@@ -75,16 +80,36 @@ export default function MainDashboard() {
         const formattedUser = { ...user, name: formatName(user.name) };
 
         // ✅ Fetch metadata hash from blockchain
-        const metadataHash = await getMetadataHash(user.address);
-        formattedUser.metadataHash = metadataHash;
+        // const metadataHash = await getMetadataHash(user.address);
+        // console.log("User address passed to getMetadataHash:", user.address);
+        // console.log("Meta data hash from getMetadataHash:", metadataHash);
 
-        // ✅ Check IPFS URI and verify integrity
-        if (user.metadataURI) {
-          const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
-          formattedUser.metadataURI = user.metadataURI;
-          formattedUser.metadataIntegrity = isValid;
+        // formattedUser.metadataHash = metadataHash;
+        // formattedUser.metadataURI = user.metadataURI;
+
+        // // ✅ Check IPFS URI and verify integrity
+        // if (user.metadataURI) {
+        //   const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
+        //   formattedUser.metadataURI = user.metadataURI;
+        //   formattedUser.metadataIntegrity = isValid;
+        // }
+
+        if (user.verified) {
+          // ✅ Fetch metadata hash from blockchain
+          const metadataHash = await getMetadataHash(user.address);
+          console.log("User address passed to getMetadataHash:", user.address);
+          console.log("Meta data hash from getMetadataHash:", metadataHash);
+        
+          formattedUser.metadataHash = metadataHash;
+        
+          // ✅ Check IPFS URI and verify integrity
+          if (user.metadataURI) {
+            const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
+            formattedUser.metadataURI = user.metadataURI;
+            formattedUser.metadataIntegrity = isValid;
+          }
         }
-
+        
         setUserData(formattedUser);
         setVerified(user.verified);
 

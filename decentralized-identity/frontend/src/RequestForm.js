@@ -81,7 +81,7 @@ export default function RequestForm() {
       const hash = keccak256(toUtf8Bytes(metadataString));
   
       // 3. Submit hash on-chain
-      await submitMetadataHash(metadata);
+      await submitMetadataHash(hash);
   
       // 4. Save to backend
       const finalForm = {

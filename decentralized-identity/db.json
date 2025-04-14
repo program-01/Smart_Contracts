@@ -55,18 +55,6 @@
       "verified": false,
       "metadataHash": "0x652f220aef2100f8dcd03bc7376d90f62ed3d61ef9b33c5a4acb5cbaa2091e43",
       "metadataURI": "https://ipfs.io/ipfs/QmcAgGeVQEgihq2AGdpgNf5qYyJyTXgwUidY6a3bjxbg19"
-    },
-    {
-      "id": "a77e",
-      "name": "Cesar Lopez",
-      "email": "cesar@email.com",
-      "dob": "02/12/2004",
-      "phone": "4046781234",
-      "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
-      "password": "Mynewpassword1!",
-      "verified": false,
-      "metadataHash": "0x652f220aef2100f8dcd03bc7376d90f62ed3d61ef9b33c5a4acb5cbaa2091e43",
-      "metadataURI": "https://ipfs.io/ipfs/QmcAgGeVQEgihq2AGdpgNf5qYyJyTXgwUidY6a3bjxbg19"
     }
   ]
 }
