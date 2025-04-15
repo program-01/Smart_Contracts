@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { issueIdentity, isUserVerified } from "./wallet";
 import { uploadMetadataToIPFS } from "./ipfs";
+import { keccak256, toUtf8Bytes } from "ethers";
+import bs58 from "bs58";
 
 export default function AdminPanel() {
   const [requests, setRequests] = useState([]);
@@ -61,8 +63,10 @@ export default function AdminPanel() {
         const metadataURI = await uploadMetadataToIPFS(metadata);
         console.log("✅ Uploaded to IPFS:", metadataURI);
 
-        // Here we approve the user and set their 'verified' status to true
-        await issueIdentity(req.address, metadataURI);
+        const ipfsHash = metadataURI.split("/").pop(); // Gets just "Qm..."
+
+        const hashBytes32 = keccak256(toUtf8Bytes(ipfsHash));
+        await issueIdentity(req.address, hashBytes32);
 
         const updatedUser = { // Set to true or false depending on whether they've been approved
           ...req,
