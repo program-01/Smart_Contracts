@@ -15,7 +15,7 @@
       "dob": "01/01/2000",
       "phone": "123-456-7890",
       "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-      "verified": false
+      "verified": true
     },
     {
       "id": "0eaf",
@@ -52,7 +52,7 @@
       "phone": "4046781234",
       "address": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
       "password": "Mynewpassword1!",
-      "verified": false,
+      "verified": true,
       "metadataHash": "0x652f220aef2100f8dcd03bc7376d90f62ed3d61ef9b33c5a4acb5cbaa2091e43",
       "metadataURI": "https://ipfs.io/ipfs/QmcAgGeVQEgihq2AGdpgNf5qYyJyTXgwUidY6a3bjxbg19"
     }

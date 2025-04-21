@@ -63,14 +63,14 @@ export default function AdminPanel() {
         const metadataURI = await uploadMetadataToIPFS(metadata);
         console.log("✅ Uploaded to IPFS:", metadataURI);
 
-        const ipfsHash = metadataURI.split("/").pop(); // Gets just "Qm..."
+        const ipfsHash = metadataURI.split("/").pop(); 
 
         const hashBytes32 = keccak256(toUtf8Bytes(ipfsHash));
         await issueIdentity(req.address, hashBytes32);
 
-        const updatedUser = { // Set to true or false depending on whether they've been approved
+        const updatedUser = { 
           ...req,
-          verified: true, // Set the verified status to true for approved users
+          verified: true, 
         };
 
         // Update the db.json to reflect that the user is verified

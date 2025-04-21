@@ -25,7 +25,6 @@ export default function RequestForm() {
         const signer = await connectWallet();
         const userAddress = await signer.getAddress();
   
-        // Prevent setting state if it's already the same
         setForm((prev) => {
           if (prev.address === userAddress) return prev;
           return { ...prev, address: userAddress };
@@ -200,7 +199,7 @@ export default function RequestForm() {
           minLength="10"
           pattern=".*[a-z].*"
           title="Password must include at least 1 lowercase, 1 uppercase, 1 number, 1 special symbol, and be at least 10 characters long."
-          style={{ paddingRight: '30px' }} // To leave space for the icon
+          style={{ paddingRight: '30px' }} 
         />
         <FaExclamationCircle
           style={{
@@ -210,7 +209,7 @@ export default function RequestForm() {
             transform: 'translateY(-50%)',
             cursor: 'pointer',
             fontSize: '18px',
-            color: '#FFCC00', // Icon color
+            color: '#FFCC00', 
             opacity: 0.7,
           }}
           className="tooltip-icon"

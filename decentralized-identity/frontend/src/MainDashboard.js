@@ -8,7 +8,7 @@ import {
 import RequestForm from "./RequestForm";
 import { keccak256, toUtf8Bytes } from "ethers"; // For hashing IPFS data
 
-// ✅ Helper to verify IPFS content matches on-chain hash
+// Helper to verify IPFS content matches on-chain hash
 const verifyMetadataIntegrity = async (uri, expectedHash) => {
   try {
     const res = await fetch(uri); // Fetch IPFS JSON
@@ -79,30 +79,15 @@ export default function MainDashboard() {
 
         const formattedUser = { ...user, name: formatName(user.name) };
 
-        // ✅ Fetch metadata hash from blockchain
-        // const metadataHash = await getMetadataHash(user.address);
-        // console.log("User address passed to getMetadataHash:", user.address);
-        // console.log("Meta data hash from getMetadataHash:", metadataHash);
-
-        // formattedUser.metadataHash = metadataHash;
-        // formattedUser.metadataURI = user.metadataURI;
-
-        // // ✅ Check IPFS URI and verify integrity
-        // if (user.metadataURI) {
-        //   const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
-        //   formattedUser.metadataURI = user.metadataURI;
-        //   formattedUser.metadataIntegrity = isValid;
-        // }
-
         if (user.verified) {
-          // ✅ Fetch metadata hash from blockchain
+          //Fetches metadata hash from blockchain
           const metadataHash = await getMetadataHash(user.address);
           console.log("User address passed to getMetadataHash:", user.address);
           console.log("Meta data hash from getMetadataHash:", metadataHash);
         
           formattedUser.metadataHash = metadataHash;
         
-          // ✅ Check IPFS URI and verify integrity
+          // Checks IPFS URI and verify integrity
           if (user.metadataURI) {
             const isValid = await verifyMetadataIntegrity(user.metadataURI, metadataHash);
             formattedUser.metadataURI = user.metadataURI;

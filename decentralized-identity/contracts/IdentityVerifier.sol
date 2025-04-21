@@ -66,7 +66,7 @@ contract IdentityVerifier {
         userMetadataHash[msg.sender] = metadataHash;
     }
 
-    function issueIdentity(address user, string memory metadataHash) public {
+    function issueIdentity(address user, bytes32 metadataHash) public {
         require(msg.sender == admin, "Only admin");
         require(!isVerified[user], "Already verified");
 
