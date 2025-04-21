@@ -2,10 +2,8 @@ import { JsonRpcProvider, Contract } from "ethers";
 import { keccak256, toUtf8Bytes } from "ethers";
 import contractABI from "./contract/IdentityVerifier.json";
 
-// Paste local deployed contract address here:
-const contractAddress = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"; // Replaced this with our deployed address
+const contractAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"; 
 
-// Point the provider to your local Hardhat node
 const provider = new JsonRpcProvider("http://127.0.0.1:8545");
 
 let signerIndex = 5; // Keeps track of the last used signer
@@ -24,15 +22,9 @@ export async function getNextSigner() {
     throw new Error("No more available signers.");
   }
   const signer = await provider.getSigner(signerIndex);
-  signerIndex++; // Move to next one for future calls
+  signerIndex++;
   return signer;
 }
-
-// export async function connectWallet() {
-//   // Use the first local Hardhat account as the signer
-//   const signer = await provider.getSigner();
-//   return signer;
-// }
 
 export async function connectWallet() {
   const signer = await getNextSigner();
@@ -71,7 +63,7 @@ export async function getWalletInfo(signer) {
   }
 
   export async function issueIdentity(userAddress, metadataURI) {
-    const adminSigner = await provider.getSigner(); // must be owner
+    const adminSigner = await provider.getSigner(); 
     const contract = new Contract(contractAddress, contractABI.abi, adminSigner);
   
     console.log("Admin issuing identity to:", userAddress);
@@ -88,7 +80,7 @@ export async function getWalletInfo(signer) {
   }
 
   export async function isUserVerified(address) {
-    const signer = await connectWallet(); // or provider.getSigner(0)
+    const signer = await connectWallet(); 
     const contract = new Contract(contractAddress, contractABI.abi, signer);
     return await contract.verifyIdentity(address);
   }
@@ -107,7 +99,7 @@ export async function submitMetadataHash(metadata) {
     const contract = new Contract(contractAddress, contractABI.abi, signer);
   
     const metadataString = JSON.stringify(metadata);
-    const hash = keccak256(toUtf8Bytes(metadataString)); // Hash it client-side
+    const hash = keccak256(toUtf8Bytes(metadataString)); 
   
     const tx = await contract.submitMetadataHash(hash);
 
@@ -119,7 +111,7 @@ export async function submitMetadataHash(metadata) {
     const signer = await connectWallet();
     const contract = new Contract(contractAddress, contractABI.abi, signer);
     console.log("Contract address:", contractAddress);
-    console.log("Contract ABI:", contractABI.abi); // just the top-level to confirm structure
+    console.log("Contract ABI:", contractABI.abi); 
 
     return await contract.getMetadataHash(address);
   }
